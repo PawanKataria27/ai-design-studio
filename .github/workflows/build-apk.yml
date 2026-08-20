@@ -19,7 +19,8 @@ jobs:
         with:
           flutter-version: '3.35.0'
           channel: stable
-
+      - name: Create Android project
+        run: flutter create .
       - name: Get dependencies
         run: flutter pub get
 
