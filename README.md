@@ -1,26 +1,30 @@
-# AI Design Studio v0.2
+# MG AI Design Studio v0.3
 
-Flutter prototype for Android + iPhone.
+Flutter mobile app connected to the owner's Supabase project.
 
-## Added
-- Login screen
-- Email/mobile + password UI
-- Google login placeholder
-- New account / guest flow
-- Credits counter
-- Subscribe / Pro entry points
-- Starter / Pro / Business subscription UI
-- Payment placeholder ready for store billing integration
-- Camera, gallery, AI prompt, size selector and result screen
+## Working in this version
 
-## Production integrations required
-- Firebase Authentication (email/phone/Google/Apple)
-- Google Play Billing for Android subscriptions
-- App Store subscriptions / StoreKit for iPhone
-- Secure backend for user accounts, credits and subscription verification
-- Real AI image generation/editing API
-- Cloud storage and design history
+- Email signup with confirmation email
+- Email/password sign in
+- Persistent login session and sign out
+- Supabase-backed Free subscription and credit display
+- Camera and gallery image selection
+- Save a design-project draft to Supabase
+- View and delete the signed-in user's design history
+- Usage events stored in `usage_logs`
+- Android APK build through GitHub Actions
 
-## Run
-flutter pub get
-flutter run
+## Next production integrations
+
+- Supabase Storage bucket for uploaded and generated images
+- AI image generation through a protected Supabase Edge Function
+- Payment-gateway checkout and webhook verification
+- Admin web dashboard
+- Signed Android App Bundle for Google Play
+- iOS signing and TestFlight/App Store release
+
+## Security
+
+- Client code uses only the Supabase publishable key.
+- Database access is protected by Row Level Security.
+- AI and payment secret keys must only be stored as server-side function secrets.

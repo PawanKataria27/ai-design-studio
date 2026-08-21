@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -12,23 +18,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.35.0'
           channel: stable
+
       - name: Create Android project
         run: flutter create .
+
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Analyze app
+        run: flutter analyze lib
 
       - name: Build APK
         run: flutter build apk --release
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: Mahadev-Graphics-APK
+          name: MG-AI-Design-Studio-APK
           path: build/app/outputs/flutter-apk/app-release.apk
