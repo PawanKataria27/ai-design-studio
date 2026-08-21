@@ -174,6 +174,12 @@ class _AuthPageState extends State<AuthPage> {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'by Mahadev Graphics & Advertiser',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       _isSignUp
@@ -552,6 +558,11 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Mahadev Graphics & Advertiser',
+                    style: TextStyle(color: colorScheme.onPrimary),
                   ),
                   const SizedBox(height: 14),
                   if (_loadingDashboard)
