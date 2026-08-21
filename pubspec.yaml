@@ -1,7 +1,7 @@
 name: ai_design_studio
-description: AI-powered design generator with login and subscription prototype.
+description: MG AI Design Studio mobile app with Supabase authentication and design history.
 publish_to: "none"
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
   supabase_flutter: ^2.8.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
