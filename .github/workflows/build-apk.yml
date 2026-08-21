@@ -27,7 +27,9 @@ jobs:
           channel: stable
 
       - name: Create Android project
-        run: flutter create .
+        run: |
+          flutter create .
+          sed -i 's/android:label="ai_design_studio"/android:label="MG AI Design Studio"/' android/app/src/main/AndroidManifest.xml
 
       - name: Get dependencies
         run: flutter pub get
@@ -36,10 +38,12 @@ jobs:
         run: flutter analyze lib
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/MG-AI-Design-Studio.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v5
         with:
           name: MG-AI-Design-Studio-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/MG-AI-Design-Studio.apk
