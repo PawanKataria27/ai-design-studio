@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -308,6 +310,8 @@ class _HomePageState extends State<HomePage> {
   int _designCount = 0;
   bool _loadingDashboard = true;
   bool _savingDraft = false;
+  bool _generating = false;
+  Uint8List? _generatedImage;
 
   User get _user => supabase.auth.currentUser!;
 
@@ -451,26 +455,78 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _showAiStatus() async {
-    await _logAction('ai_generate_tapped');
-    if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.auto_awesome),
-        title: const Text('AI service is the next integration'),
-        content: const Text(
-          'Login, camera/gallery, subscription data and design history are now connected. '
-          'AI generation needs a protected server API key, which will be added through a Supabase Edge Function.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _generateDesign() async {
+    final prompt = _promptController.text.trim();
+    if (prompt.isEmpty) {
+      _showSnack('Please describe the design you want.', isError: true);
+      return;
+    }
+
+    setState(() {
+      _generating = true;
+      _generatedImage = null;
+    });
+
+    try {
+      final body = <String, dynamic>{'prompt': prompt};
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        body['image_base64'] = base64Encode(bytes);
+        final path = _selectedImage!.path.toLowerCase();
+        body['image_mime_type'] = path.endsWith('.png')
+            ? 'image/png'
+            : path.endsWith('.webp')
+                ? 'image/webp'
+                : 'image/jpeg';
+      }
+
+      final response = await supabase.functions.invoke(
+        'generate-design',
+        body: body,
+      );
+      final result = Map<String, dynamic>.from(response.data as Map);
+      final encoded = result['image_base64']?.toString();
+      if (encoded == null || encoded.isEmpty) {
+        throw Exception(result['error'] ?? 'AI returned no image');
+      }
+
+      final imageBytes = base64Decode(encoded);
+      if (!mounted) return;
+      setState(() => _generatedImage = imageBytes);
+
+      final shortTitle =
+          prompt.length > 45 ? '${prompt.substring(0, 45)}…' : prompt;
+      await supabase.from('designs').insert({
+        'user_id': _user.id,
+        'title': shortTitle,
+        'prompt': prompt,
+        'design_type': 'ai_generated',
+        'status': 'completed',
+        'file_format': 'png',
+        'project_data': {
+          'source': 'mg_mobile_app',
+          'model': result['model'] ?? 'gpt-image-1.5',
+          'used_reference_image': _selectedImage != null,
+        },
+      });
+      await _logAction('ai_design_generated');
+      if (!mounted) return;
+      setState(() => _designCount += 1);
+      _showSnack('AI design generated successfully.');
+    } on FunctionException catch (error) {
+      if (mounted) {
+        _showSnack(
+          'AI service error: ${error.details ?? error.reasonPhrase ?? error.status}',
+          isError: true,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        _showSnack('Design could not be generated: $error', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
   }
 
   void _showSnack(String message, {bool isError = false}) {
@@ -640,10 +696,41 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: _showAiStatus,
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Generate Design with AI'),
+              onPressed: _generating ? null : _generateDesign,
+              icon: _generating
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_awesome),
+              label: Text(
+                _generating ? 'Generating design…' : 'Generate Design with AI',
+              ),
             ),
+            if (_generatedImage != null) ...[
+              const SizedBox(height: 16),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Image.memory(
+                      _generatedImage!,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        'Your AI design • saved in My Designs',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             TextButton.icon(
               onPressed: _savingDraft ? null : _saveDraft,
